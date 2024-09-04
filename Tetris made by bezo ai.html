@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tetris Game with WASD Controls</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #000d1a;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+        .tetris-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #fff;
+        }
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            width: 200px;
+            margin-bottom: 10px;
+        }
+        #tetris-grid {
+            display: grid;
+            grid-template-columns: repeat(10, 30px);
+            grid-template-rows: repeat(20, 30px);
+            gap: 1px;
+            background-color: #0a0a0a;
+            border: 2px solid #fff;
+            margin-bottom: 10px;
+        }
+        #tetris-grid div {
+            width: 30px;
+            height: 30px;
+            background-color: #1a1a1a;
+        }
+        .tetromino {
+            background-color: #67020b;
+            border: 1px solid #67020b;
+        }
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            width: 200px;
+        }
+        button {
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="tetris-container">
+        <div class="game-info">
+            <span>Level: <span id="level">1</span></span>
+            <span>Lines to Clear: <span id="lines-cleared">0</span></span>
+            <span>Time: <span id="timer">0</span></span>
+        </div>
+        <div id="tetris-grid">
+            <!-- The grid will be populated by JavaScript -->
+        </div>
+        <div class="controls">
+            <button id="play" style="display:none;">Play</button>
+            <button id="pause">Pause</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const grid = document.querySelector('#tetris-grid');
+            const timerDisplay = document.getElementById('timer');
+            const levelDisplay = document.getElementById('level');
+            const linesClearedDisplay = document.getElementById('lines-cleared');
+            const pauseButton = document.getElementById('pause');
+            const playButton = document.getElementById('play');
+            const width = 10;
+            let timer = 0;
+            let intervalId;
+            let isPaused = false;
+            let currentPosition = 4;
+            let currentRotation = 0;
+
+            // Define Tetromino shapes
+            const lTetromino = [
+                [1, width+1, width*2+1, 2],
+                [width, width+1, width+2, width*2+2],
+                [1, width+1, width*2+1, width*2],
+                [width, width*2, width*2+1, width*2+2]
+            ];
+
+            const zTetromino = [
+                [0,width,width+1,width*2+1],
+                [width+1,width+2,width*2,width*2+1],
+                [0,width,width+1,width*2+1],
+                [width+1,width+2,width*2,width*2+1]
+            ];
+
+            const tTetromino = [
+                [1,width,width+1,width+2],
+                [1,width+1,width+2,width*2+1],
+                [width,width+1,width+2,width*2+1],
+                [1,width,width+1,width*2+1]
+            ];
+
+            const oTetromino = [
+                [0,1,width,width+1],
+                [0,1,width,width+1],
+                [0,1,width,width+1],
+                [0,1,width,width+1]
+            ];
+
+            const iTetromino = [
+                [1,width+1,width*2+1,width*3+1],
+                [width,width+1,width+2,width+3],
+                [1,width+1,width*2+1,width*3+1],
+                [width,width+1,width+2,width+3]
+            ];
+
+            const theTetrominoes = [lTetromino, zTetromino, tTetromino, oTetromino, iTetromino];
+
+            // Create the grid
+            for (let i = 0; i < 200; i++) {
+                const cell = document.createElement('div');
+                grid.appendChild(cell);
+            }
+            for (let i = 0; i < 10; i++) {
+                const cell = document.createElement('div');
+                cell.classList.add('taken');
+                grid.appendChild(cell);
+            }
+            const squares = Array.from(document.querySelectorAll('#tetris-grid div'));
+
+            // Select a random Tetromino and its first rotation
+            let random = Math.floor(Math.random() * theTetrominoes.length);
+            let current = theTetrominoes[random][currentRotation];
+
+            // Draw the Tetromino
+            function draw() {
+                current.forEach(index => {
+                    squares[currentPosition + index].classList.add('tetromino');
+                });
+            }
+
+            // Undraw the Tetromino
+            function undraw() {
+                current.forEach(index => {
+                    squares[currentPosition + index].classList.remove('tetromino');
+                });
+            }
+
+            // Assign functions to keyCodes
+            function control(e) {
+                if (e.key === 'a') {
+                    moveLeft();
+                } else if (e.key === 'd') {
+                    moveRight();
+                } else if (e.key === 's') {
+                    moveDown();
+                } else if (e.key === 'w') {
+                    rotate();
+                }
+            }
+            document.addEventListener('keydown', control);
+
+            // Move down function
+            function moveDown() {
+                undraw();
+                currentPosition += width;
+                draw();
+                freeze();
+            }
+
+            // Freeze function
+            function freeze() {
+                if (current.some(index => squares[currentPosition + index + width].classList.contains('taken'))) {
+                    current.forEach(index => squares[currentPosition + index].classList.add('taken'));
+                    // Start a new Tetromino falling
+                    random = Math.floor(Math.random() * theTetrominoes.length);
+                    current = theTetrominoes[random][currentRotation];
+                    currentPosition = 4;
+                    draw();
+                    gameOver();
+                }
+            }
+
+            // Move the Tetromino left, unless it's at the edge or there's a blockage
+            function moveLeft() {
+                undraw();
+                const isAtLeftEdge = current.some(index => (currentPosition + index) % width === 0);
+                if (!isAtLeftEdge) currentPosition -= 1;
+                if (current.some(index => squares[currentPosition + index].classList.contains('taken'))) {
+                    currentPosition += 1;
+                }
+                draw();
+            }
+
+            // Move the Tetromino right, unless it's at the edge or there's a blockage
+            function moveRight() {
+                undraw();
+                const isAtRightEdge = current.some(index => (currentPosition + index) % width === width - 1);
+                if (!isAtRightEdge) currentPosition += 1;
+                if (current.some(index => squares[currentPosition + index].classList.contains('taken'))) {
+                    currentPosition -= 1;
+                }
+                draw();
+            }
+
+            // Rotate the Tetromino
+            function rotate() {
+                undraw();
+                currentRotation++;
+                if (currentRotation === current.length) { // If currentRotation goes to 4, make it go back to 0
+                    currentRotation = 0;
+                }
+                current = theTetrominoes[random][currentRotation];
+                draw();
+            }
+
+            // Show up-next Tetromino in mini-grid display (optional)
+
+            // Add functionality to the Play and Pause buttons
+            pauseButton.addEventListener('click', () => {
+                isPaused = true;
+                clearInterval(intervalId);
+                pauseButton.style.display = 'none';
+                playButton.style.display = 'block';
+            });
+
+            playButton.addEventListener('click', () => {
+                isPaused = false;
+                intervalId = setInterval(moveDown, 1000);
+                playButton.style.display = 'none';
+                pauseButton.style.display = 'block';
+            });
+
+            // Start the game timer
+            intervalId = setInterval(() => {
+                if (!isPaused) {
+                    moveDown();
+                    timer++;
+                    timerDisplay.textContent = timer;
+                }
+            }, 1000);
+
+            // Check for game over
+            function gameOver() {
+                if (current.some(index => squares[currentPosition + index].classList.contains('taken'))) {
+                    clearInterval(intervalId);
+                    alert("Game Over");
+                }
+            }
+        });
+    </script>
+</body>
+</html>
+

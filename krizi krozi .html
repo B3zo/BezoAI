@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>x and o </title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+			background-color: green;
+        }
+
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            grid-gap: 7px;
+            margin: 20px auto;
+			background-color: green;
+        }
+
+        .cell {
+            width: 100px;
+            height: 100px;
+            border: 2px solid #333;
+            font-size: 2em;
+            cursor: pointer;
+			background-color: red;
+        }
+							 #timer {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 19px;
+			
+        }
+	let timerInterval;
+    let time = 0
+	<div id="game-container">
+    <div id="score">Score: 0</div>
+    <div id="timer">Time: 0s</div>
+	function updateTimer() {
+        time += 1;
+        document.getElementById('timer').innerText = 'Time: ' + time + 's';
+    }
+
+
+    </style>
+</head>
+<body>
+
+<h1>Križec in krožec</h1>
+
+<div id="message"></div>
+
+<div class="board" id="board">
+    <div class="cell" onclick="makeMove(0, 0)"></div>
+    <div class="cell" onclick="makeMove(0, 1)"></div>
+    <div class="cell" onclick="makeMove(0, 2)"></div>
+    <div class="cell" onclick="makeMove(1, 0)"></div>
+    <div class="cell" onclick="makeMove(1, 1)"></div>
+    <div class="cell" onclick="makeMove(1, 2)"></div>
+    <div class="cell" onclick="makeMove(2, 0)"></div>
+    <div class="cell" onclick="makeMove(2, 1)"></div>
+    <div class="cell" onclick="makeMove(2, 2)"></div>
+</div>
+
+<script>
+    let currentPlayer = 'X';
+    let board = [
+        ['', '', ''],
+        ['', '', ''],
+        ['', '', '']
+    ];
+
+    function makeMove(row, col) {
+        if (board[row][col] === '') {
+            board[row][col] = currentPlayer;
+            document.getElementById('board').children[row * 3 + col].innerHTML = currentPlayer;
+            
+            if (checkWin()) {
+                document.getElementById('message').innerHTML = `Igralec ${currentPlayer} je zmagal!`;
+                disableBoard();
+            } else if (boardIsFull()) {
+                document.getElementById('message').innerHTML = 'Igra je neodločena.';
+            } else {
+                currentPlayer = (currentPlayer === 'X') ? 'O' : 'X';
+            }
+        }
+    }
+
+    function checkWin() {
+        // Preveri vrstice, stolpce in diagonale
+        for (let i = 0; i < 3; i++) {
+            if (checkRow(i) || checkColumn(i)) {
+                return true;
+            }
+        }
+        return checkDiagonals();
+    }
+
+    function checkRow(row) {
+        return (board[row][0] !== '' && board[row][0] === board[row][1] && board[row][1] === board[row][2]);
+    }
+
+    function checkColumn(col) {
+        return (board[0][col] !== '' && board[0][col] === board[1][col] && board[1][col] === board[2][col]);
+    }
+
+    function checkDiagonals() {
+        return ((board[0][0] !== '' && board[0][0] === board[1][1] && board[1][1] === board[2][2]) ||
+                (board[0][2] !== '' && board[0][2] === board[1][1] && board[1][1] === board[2][0]));
+    }
+
+    function boardIsFull() {
+        for (let i = 0; i < 3; i++) {
+            for (let j = 0; j < 3; j++) {
+                if (board[i][j] === '') {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    function disableBoard() {
+        for (let i = 0; i < 3; i++) {
+            for (let j = 0; j < 3; j++) {
+                document.getElementById('board').children[i * 3 + j].onclick = null;
+            }
+        }
+    }
+</script>
+
+</body>
+</html>

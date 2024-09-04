@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BezoAI Beta</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f4f4f4;
+        }
+
+        #chat-container {
+            width: 400px;
+            max-width: 100%;
+            border: 2px solid #333;
+            border-radius: 10px;
+            padding: 10px;
+            background-color: #fff;
+        }
+
+        #chat-log {
+            height: 300px;
+            overflow-y: auto;
+            border-bottom: 1px solid #333;
+            padding: 10px;
+        }
+
+        .message {
+            margin: 10px 0;
+        }
+
+        .user-message {
+            text-align: right;
+            color: #007BFF;
+        }
+
+        .bot-message {
+            text-align: left;
+            color: #FF5733;
+        }
+
+        #user-input {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 5px;
+            border: 1px solid #333;
+        }
+
+        #send-button {
+            margin-top: 10px;
+            padding: 10px 20px;
+            border-radius: 5px;
+            border: none;
+            background-color: #007BFF;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        #send-button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+
+<div id="chat-container">
+    <div id="chat-log">
+        <!-- Chat log will be displayed here -->
+    </div>
+    <input type="text" id="user-input" placeholder="Type your message here..." />
+    <button id="send-button">Send</button>
+</div>
+
+<script>
+    const chatLog = document.getElementById('chat-log');
+    const userInput = document.getElementById('user-input');
+    const sendButton = document.getElementById('send-button');
+
+    const responses = {
+        "hello": "Hello! I'm BezoAi Beta. How can I assist you today?",
+        "how are you": "I'm just a program, so I don't have feelings, but thanks for asking!",
+        "what is your name": "I'm ChatGPT Lite, a very basic version of ChatGPT!",
+        "what can you do": "I can chat with you, answer simple questions, and provide information!",
+        "tell me a joke": "Why don't scientists trust atoms? Because they make up everything!",
+        "bye": "Goodbye! It was nice talking to you!",
+        "what is the meaning of life": "The meaning of life is a complex question. Some say it's 42!",
+        "who created you": "I was created by a combination of HTML, CSS, and JavaScript, designed by a developer!",
+        "default": "I'm sorry, I don't understand that. Can you ask something else?",
+		"hi" : "Hello! I'm BezoAi Beta. How can I assist you today?"
+    };
+
+    function getBotResponse(message) {
+        const lowerCaseMessage = message.toLowerCase();
+        return responses[lowerCaseMessage] || responses["default"];
+    }
+
+    function displayMessage(message, sender) {
+        const messageElement = document.createElement('div');
+        messageElement.classList.add('message');
+        messageElement.classList.add(sender === 'user' ? 'user-message' : 'bot-message');
+        messageElement.textContent = message;
+        chatLog.appendChild(messageElement);
+        chatLog.scrollTop = chatLog.scrollHeight;
+    }
+
+    function handleSend() {
+        const message = userInput.value.trim();
+        if (message !== "") {
+            displayMessage(message, 'user');
+            const botResponse = getBotResponse(message);
+            setTimeout(() => {
+                displayMessage(botResponse, 'bot');
+            }, 500);
+            userInput.value = "";
+        }
+    }
+
+    sendButton.addEventListener('click', handleSend);
+
+    userInput.addEventListener('keypress', (event) => {
+        if (event.key === 'Enter') {
+            handleSend();
+        }
+    });
+</script>
+
+</body>
+</html>
